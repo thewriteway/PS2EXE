@@ -7,9 +7,9 @@ You find the script based version here (https://github.com/MScholtes/TechNet-Gal
 
 Author: Markus Scholtes
 
-Version: 1.0.15
+Version: 1.0.17
 
-Date: 2025-01-05
+Date: 2025-08-21
 
 ## Installation
 
@@ -36,8 +36,8 @@ or start Win-PS2EXE for a graphical front end with
 ## Parameter
 ```powershell
 ps2exe [-inputFile] '<file_name>' [[-outputFile] '<file_name>']
-       [-prepareDebug] [-x86|-x64] [-lcid <id>] [-STA|-MTA] [-noConsole] [-UNICODEEncoding]
-       [-credentialGUI] [-iconFile '<filename>'] [-title '<title>'] [-description '<description>']
+       [-prepareDebug] [-x86|-x64] [-lcid <id>] [-STA|-MTA] [-noConsole] [-conHost] [-UNICODEEncoding]
+       [-credentialGUI] [-iconFile '<filename>'] [-$embedFiles <hashtable>] [-title '<title>'] [-description '<description>']
        [-company '<company>'] [-product '<product>'] [-copyright '<copyright>'] [-trademark '<trademark>']
        [-version '<version>'] [-configFile] [-noOutput] [-noError] [-noVisualStyles] [-exitOnCancel]
        [-DPIAware] [-requireAdmin] [-supportOS] [-virtualize] [-longPaths]
@@ -51,9 +51,12 @@ ps2exe [-inputFile] '<file_name>' [[-outputFile] '<file_name>']
            lcid = location ID for the compiled executable. Current user culture if not specified
      STA or MTA = 'Single Thread Apartment' or 'Multi Thread Apartment' mode
       noConsole = the resulting executable will be a Windows Forms app without a console window
+        conHost = force start with conhost as console instead of Windows Terminal (disables redirections)
 UNICODEEncoding = encode output as UNICODE in console mode
   credentialGUI = use GUI for prompting credentials in console mode
        iconFile = icon file name for the compiled executable
+     embedFiles = files to embed given as hash, will be extracted to key of hash, source file names must be unique
+                  (e.g. -embedFiles @{'Targetfilepath'='Sourcefilepath'} )
           title = title information (displayed in details tab of Windows Explorer's properties dialog)
     description = description information (not displayed, but embedded in executable)
         company = company information (not displayed, but embedded in executable)
@@ -93,6 +96,13 @@ A generated executable has the following reserved parameters:
 PS2EXE can be used with Powershell Core. To do so just install the module PS2EXE in Powershell Core as described above. But since .Net Core is not delivered with a compiler, the compiler of .Net Framework is used (.Net Framework and Powershell 5.1 are included in Windows).
 
 **For this reason PS2EXE can only compile Powershell 5.1 compatible scripts and generates .Net 4.x binaries, but can still be used directly on every supported Windows OS without dependencies.**
+
+### Embedding files in compiled executables:
+With the parameter *-embedFiles* followed by a hash table with paths to files those files will be embedded in the compiled executable.
+At startup of the executable those files will be written to disk to the specified paths, e.g. *-embedFiles @{'Targetfilepath1'='Sourcefilepath1';'Targetfilepath2'='Sourcefilepath2'}*.
+Source file names must be unique. Absolute and relative paths are allowed. For target paths a relative path beginning with *'.\\'* is interpreted as relative to the executable, without the leading *'.\\'* as relative to the current path at runtime.
+Directories are created automaticly on startup if necessary. In the target path environment variables in cmd.exe notation like *%TEMP%* or *%APPDATA%* are expanded at runtime.
+A failure in creating one of the embedded files will stop the execution of the compiled executable immediately.
 
 ### List of cmdlets not implemented:
 The basic input/output commands had to be rewritten in C# for PS2EXE. Not implemented are *Write-Progress* in console mode (too much work) and *Start-Transcript*/*Stop-Transcript* (no proper reference implementation by Microsoft).
@@ -144,6 +154,12 @@ $Host.UI.RawUI.FlushInputBuffer()
 ```
 
 ## Changes:
+### 1.0.17 / 2025-08-21
+- new parameter -embedFiles to embed files in compiled executable
+
+### 1.0.16 / 2025-07-20
+- new parameter -conHost for force starting compiled executables in Conhost instead of Windows Terminal
+
 ### 1.0.15 / 2025-01-05
 - if used only in Powershell Core the module has not to be installed in Powershell 5.1 too
 
@@ -192,7 +208,6 @@ $Host.UI.RawUI.FlushInputBuffer()
 
 ### 1.0.3 / 2020-02-15
 - converted files from UTF-16 to UTF-8 to allow git diff
-
 - ignore control keys in secure string request in console mode
 
 ### 1.0.2 / 2020-01-08
